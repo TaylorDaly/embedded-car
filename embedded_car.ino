@@ -1,30 +1,111 @@
-// defines pins for ultrasinic
-const int trigPin = 6;
-const int echoPin = 7;
-long duration;
-int distance;
+#include <Wire.h>
+#include <VL6180X.h>
+
+// defines pins for ultrasonic sensor
+#define trigPin 6
+#define echoPin 7
+#define RANGE 1
+
+/* List of adresses for each sensor - after reset the address can be configured */
+#define address0 0x22
+#define address1 0x20 
+
+/* These Arduino pins must be wired to the IO0 pin of VL6180x */
+int enablePin0 = A0;
+int enablePin1 = A1;
+
+
+//Used for the sensor
+long timer;                             //used to measure time between meausurements
+long duration;                          //used to measure the time between pulse an echo
+int laserDist0;
+int laserDist1;
+int ultrasonicDist;
+
+/* Create a new instance for each sensor */
+VL6180X sensor0;
+VL6180X sensor1;
+
+//*note on steering: Changing direction rapidly can cause unexpected effects. From a mechanical standpoint, going from forward
+//to reverse rapidly could potentially damage a gear box.  From an electrical standpoint, it can cause large current and voltage spikes.  
+//To resolve these issues, a motor needs to be taken from one direction to another with a small pause inbetween
+
+
+//Motor pins
 int pinI1 = 8; //define I1 interface
 int pinI2 = 11; //define I2 interface
 int speedpinA = 9; //enable motor A
 int pinI3 = 12; //define I3 interface
 int pinI4 = 13; //define I4 interface
 int speedpinB = 10; //enable motor B
+
 int motorSpeed = 255; //define the speed of motor
+
+//State logic
 enum states {movingForward, turningLeft, turningRight, movingBackward, stopped} state;
 enum states lastState = state;
 enum states lastTurn = turningLeft;
+
+
 void setup()
 {
+  Serial.begin(9600); // Starts the serial communication
+  Wire.begin();
+
+  //Ultrasonic sensor
   pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
   pinMode(echoPin, INPUT); // Sets the echoPin as an Input
-  Serial.begin(9600); // Starts the serial communication
 
+  // Reset all connected sensors
+  pinMode(enablePin0,OUTPUT);
+  pinMode(enablePin1,OUTPUT);
+
+  digitalWrite(enablePin0, LOW);        //both pins must be set to low before they are set to high
+  digitalWrite(enablePin1, LOW);
+
+  // Sensor 0
+  Serial.println("Start Sensor 0");
+  digitalWrite(enablePin0, HIGH);
+  delay(50);
+  sensor0.init();
+  sensor0.configureDefault();
+  sensor0.setAddress(address0);
+  Serial.println(sensor0.readReg(address0));                        // read I2C address
+  sensor0.writeReg(VL6180X::SYSRANGE__MAX_CONVERGENCE_TIME, 30);
+  sensor0.writeReg16Bit(VL6180X::SYSALS__INTEGRATION_PERIOD, 50);
+  sensor0.setTimeout(500);
+  sensor0.stopContinuous();
+  sensor0.setScaling(RANGE); // configure range or precision 1, 2 oder 3 mm
+  delay(300);
+  sensor0.startInterleavedContinuous(100);
+  delay(100);
+  
+  // Sensor1
+  Serial.println("Start Sensor 1");
+  digitalWrite(enablePin1, HIGH);
+  delay(50);
+  sensor1.init();
+  sensor1.configureDefault();
+  sensor1.setAddress(0x24);
+  Serial.println(sensor1.readReg(address1),HEX);
+  sensor1.writeReg(VL6180X::SYSRANGE__MAX_CONVERGENCE_TIME, 30);
+  sensor1.writeReg16Bit(VL6180X::SYSALS__INTEGRATION_PERIOD, 50);
+  sensor1.setTimeout(500);
+  sensor1.stopContinuous();
+  sensor1.setScaling(RANGE);
+  delay(300);
+  sensor1.startInterleavedContinuous(100);
+  delay(100);
+
+  //Set motor pins
   pinMode(pinI1, OUTPUT);
   pinMode(pinI2, OUTPUT);
   pinMode(speedpinA, OUTPUT);
   pinMode(pinI3, OUTPUT);
   pinMode(pinI4, OUTPUT);
   pinMode(speedpinB, OUTPUT);
+  
+  //Initial direction
   forward();
 }
 
@@ -32,8 +113,11 @@ void loop()
 {
   //get ultrasonic reading
   readUltrasonic();
+  laserDist0 = sensor0.readRangeContinuousMillimeters();
+  laserDist1 = sensor1.readRangeContinuousMillimeters();
+
   //if wall is within 25 cm
-  if (distance <= 25)
+  if (ultrasonicDist <= 25)
   {
     if (lastTurn == turningRight) {
       left();
@@ -46,19 +130,7 @@ void loop()
   } else {
     forward();
   }
-  //  left();
-  //  delay(2000);
-  //  stop();
-  //  right();
-  //  delay(2000);
-  //  stop();
-  //  delay(2000);
-  //  forward();
-  //  delay(2000);
-  //  stop();
-  //  backward();
-  //  delay(2000);
-  //  stop();
+
   //print state changes
   if (state != lastState) {
     Serial.print("State: ");
@@ -70,6 +142,13 @@ void loop()
   }
   //track previous state
   lastState = state;
+  delay(500);
+  Serial.print("Ultrasonic Dist: ");
+  Serial.println(ultrasonicDist);
+  Serial.print("Laser Dist 0: ");
+  Serial.println(laserDist0);
+  Serial.print("Laser Dist 1: ");
+  Serial.println(laserDist1);
 }
 
 void right()
@@ -120,19 +199,20 @@ void stop()
 }
 
 int readUltrasonic() {
-  // Clears the trigPin
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  // Sets the trigPin on HIGH state for 10 micro seconds
+  long pingTime=millis();
+  
   digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
+  while((millis()-pingTime)>.02){
+    //send out a 20 microsecond ping
+  }
   digitalWrite(trigPin, LOW);
-  // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(echoPin, HIGH);
-  // Calculating the distance
-  distance = duration * 0.034 / 2;
-  // Prints the distance on the Serial Monitor
-  //Serial.print("Distance: ");
-  //Serial.println(distance);
+  if((millis() - pingTime)>.2){
+    ultrasonicDist = 4000;
+  }
+  else{
+  duration = pulseIn(echoPin, HIGH); 
+  ultrasonicDist = (duration *.0066929)*25.24;    //convert to mm
+  }
+
 }
 
