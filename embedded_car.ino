@@ -86,7 +86,7 @@ void setup()
   delay(50);
   sensor1.init();
   sensor1.configureDefault();
-  sensor1.setAddress(0x24);
+  sensor1.setAddress(address1);
   Serial.println(sensor1.readReg(address1),HEX);
   sensor1.writeReg(VL6180X::SYSRANGE__MAX_CONVERGENCE_TIME, 30);
   sensor1.writeReg16Bit(VL6180X::SYSALS__INTEGRATION_PERIOD, 50);
