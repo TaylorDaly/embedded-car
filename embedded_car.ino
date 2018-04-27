@@ -129,36 +129,19 @@ void loop()
   laserDist0 = sensor0.readRangeContinuousMillimeters();
   laserDist1 = sensor1.readRangeContinuousMillimeters();
 
-//making a right turn on a 90 degree turn with no opening
-//to the front and an opening to the right
 
-  if(ultrasonicDist <= 175 && laserDist1 >= 150) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
-  {
-        stop();
-        delay(10);
-        do{
-          readUltrasonic();  //reading the ultrasonic while in the loop
-          right();
-          delay(100);
-          if(ultrasonicDist >= 200) //once the ultrasonic is reading a long distance it will stop
-          {
-            state=movingForward;
-          }
-        }
-        while(state == turningRight);
-        forward();
-  }
 
 //making a left turn on a 90 degree turn with no opening
 //to the front and an opening to the left
 
-  if(ultrasonicDist <= 175 && laserDist0 >= 150) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
+  if(ultrasonicDist <= 200 && laserDist0 >= 150) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
   {
         stop();
-        delay(10);
+        delay(3000);
         do{
           readUltrasonic(); //reading the ultrasonic while in the loop
           left();
+          Serial.println("left");
           delay(100);
           if(ultrasonicDist >= 200) //once the ultrasonic is reading a long distance it will stop
           {
@@ -167,6 +150,27 @@ void loop()
         }
         while(state == turningLeft);
         forward();      
+  }  
+
+//making a right turn on a 90 degree turn with no opening
+//to the front and an opening to the right
+
+  if(ultrasonicDist <= 200 && laserDist1 >= 150) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
+  {
+        stop();
+        delay(3000);
+        do{
+          readUltrasonic();  //reading the ultrasonic while in the loop
+          right();
+          Serial.println("right");
+          delay(100);
+          if(ultrasonicDist >= 200) //once the ultrasonic is reading a long distance it will stop
+          {
+            state=movingForward;
+          }
+        }
+        while(state == turningRight);
+        forward();
   }  
 
 //***** might be used with the new part
@@ -287,6 +291,7 @@ void slightRight()
   digitalWrite(pinI3, LOW);
   digitalWrite(pinI2, HIGH); //turn DC Motor A move clockwise
   digitalWrite(pinI1, LOW);
+  Serial.println("correctingRight");
   state = correctRight;
 }
 void slightLeft()
@@ -297,6 +302,7 @@ void slightLeft()
   digitalWrite(pinI3, LOW);
   digitalWrite(pinI2, HIGH); //turn DC Motor A move clockwise
   digitalWrite(pinI1, LOW);
+  Serial.println("correctingleft");
   state = correctLeft;
 }
 void left()
@@ -317,6 +323,7 @@ void forward()
   digitalWrite(pinI3, LOW);
   digitalWrite(pinI2, HIGH); //turn DC Motor A move clockwise
   digitalWrite(pinI1, LOW);
+  Serial.println("forward");
   state = movingForward;
 }
 void backward()
@@ -344,11 +351,14 @@ int readUltrasonic() {
     //send out a 20 microsecond ping
   }
   digitalWrite(trigPin, LOW);
-  if((millis() - pingTime)>.2){
-    ultrasonicDist = 4000;
-  }
-  else{
+//  if((millis() - pingTime)>.2){
+//    ultrasonicDist = 4000;
+//  }
+//  else{
   duration = pulseIn(echoPin, HIGH); 
   ultrasonicDist = (duration *.0066929)*25.24;    //convert to mm
+  // }
+  if (ultrasonicDist > 4000){
+    ultrasonicDist = 4000;
   }
 }
