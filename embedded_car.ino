@@ -18,6 +18,7 @@ int enablePin1 = A1;
 //Used for the sensor
 long timer;                             //used to measure time between meausurements
 long duration;                          //used to measure the time between pulse an echo
+long sensorTimer = millis();
 int laserDist0;
 int laserDist1;
 int ultrasonicDist;
@@ -123,77 +124,78 @@ void setup()
 void loop()
 {
   //get ultrasonic reading
-  readUltrasonic();
-  
-  //get laser readings 
-  laserDist0 = sensor0.readRangeContinuousMillimeters();
-  laserDist1 = sensor1.readRangeContinuousMillimeters();
-
+  if(millis() - sensorTimer > 50){
+    readUltrasonic();
+    
+    //get laser readings 
+    laserDist0 = sensor0.readRangeContinuousMillimeters();
+    laserDist1 = sensor1.readRangeContinuousMillimeters();
+    sensorTimer = millis();
+   }
 
 
 //making a left turn on a 90 degree turn with no opening
 //to the front and an opening to the left
 
-  if(ultrasonicDist <= 200 && laserDist0 >= 150) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
+  if(laserDist0 >= 250) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
   {
-        stop();
-        delay(3000);
+        // Give the car a little time past the turn so it doesn't turn too soon
+        delay(200);
         do{
-          readUltrasonic(); //reading the ultrasonic while in the loop
+          stop();
+          if (millis() - sensorTimer > 50){
+            readUltrasonic(); //reading the ultrasonic while in the loop
+            sensorTimer=millis();
+          }
           left();
+          delay(500);
           Serial.println("left");
-          delay(100);
           if(ultrasonicDist >= 200) //once the ultrasonic is reading a long distance it will stop
           {
-            state=movingForward;
+            stop();
+            delay(10);
+            forward();
           }
         }
         while(state == turningLeft);
-        forward();      
+        //forward(); 
+        delay(1000);     
   }  
 
 //making a right turn on a 90 degree turn with no opening
 //to the front and an opening to the right
 
-  if(ultrasonicDist <= 200 && laserDist1 >= 150) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
+  if(laserDist1 >= 250) //gonna have to measure the ultrasonic sensor so the turn will not hit the walls
   {
-        stop();
-        delay(3000);
+        // Give the car a little time past the turn so it doesn't turn too soon
+        delay(200);
         do{
-          readUltrasonic();  //reading the ultrasonic while in the loop
+          stop();
+          delay(10);
+          if (millis() - sensorTimer > 50){
+            readUltrasonic(); //reading the ultrasonic while in the loop
+            sensorTimer=millis();
+          }
           right();
+          delay(500);
           Serial.println("right");
-          delay(100);
           if(ultrasonicDist >= 200) //once the ultrasonic is reading a long distance it will stop
           {
-            state=movingForward;
+            stop();
+            delay(10);
+            forward();
           }
         }
         while(state == turningRight);
-        forward();
-  }  
-
-//***** might be used with the new part
-//  //if wall is within 250 mm
-//  if (ultrasonicDist <= 200)
-//  {
-//    if (lastTurn == turningRight) {
-//      left();
-//      //let turn left for .75 seconds (approx 90 degrees)
-//      delay(750);
-//    } else {
-//      right();
-//      delay(750);
-//    }
-//  } else {
-//    forward();
-//  }
+        //forward();
+        delay(1000);
+  }   
 
 // correcting the car when getting close to the wall on the left
 // this only works if the course is 10 inches wide
 
 //***** this is a work in progress since the correcting over adjusts the correction ****
-  if(laserDist0 <= 100 && state == movingForward)
+  if(laserDist0 <= 75 && state == movingForward)
   {
       int temp = laserDist0;
       stop();
@@ -215,10 +217,12 @@ void loop()
           delay(100);
           if(laserDist0 > temp) //once the laser reading is greater then the intial reading of getting close to the wall
           {
-            state=movingForward;
+            stop();
+            delay(10);
+            forward();
           }
       }while(state == correctRight);
-      forward();
+      //forward();
   }
   
 // correcting the car when getting close to the wall on the right
@@ -246,10 +250,10 @@ void loop()
           delay(100);
           if(laserDist1 > temp) //once the laser reading is greater then the intial reading of getting close to the wall
           {
-            state=movingForward;
+            forward();
           }
       }while(state == correctLeft);
-      forward();
+      //forward();
   }
 
   
@@ -264,7 +268,7 @@ void loop()
 //  }
   //track previous state
   lastState = state;
-  delay(300);
+  delay(100);
   Serial.print("Ultrasonic Dist: ");
   Serial.println(ultrasonicDist);
   Serial.print("Laser Dist 0: "); 
