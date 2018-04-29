@@ -135,42 +135,33 @@ void loop()
 //making a left turn on a 90 degree turn with no opening
 //to the front and an opening to the left
 
-  if(laserDist0 >= 170) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
+  if(laserDist0 >= 200) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
   {
         stop();
-        do{
-          readUltrasonic(); //reading the ultrasonic while in the loop
-          left();
-          delay(450);
-          Serial.println("left");
-          if(ultrasonicDist >= 250) //once the ultrasonic is reading a long distance it will stop
-          {
-            state=movingForward;
-          }
-        }
-        while(state == turningLeft);
-        forward();      
+        delay(30);
+        readUltrasonic(); //reading the ultrasonic while in the loop
+        left();
+        delay(550);
+        Serial.println("left");
+        state=movingForward;
+        forward();    
+        delay(500);  
   }  
 
 //making a right turn on a 90 degree turn with no opening
 //to the front and an opening to the right
 
-  if(ultrasonicDist <= 200 && laserDist1 >= 170) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
+  if(ultrasonicDist <= 150 && laserDist1 >= 200) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
   {
         stop();
-      
-        do{
-          readUltrasonic();  //reading the ultrasonic while in the loop
-          right();
-          delay(450);
-          Serial.println("right");
-          if(ultrasonicDist >= 250) //once the ultrasonic is reading a long distance it will stop
-          {
-            state=movingForward;
-          }
-        }
-        while(state == turningRight);
+        delay(30);
+        readUltrasonic();  //reading the ultrasonic while in the loop
+        right();
+        delay(550);
+        Serial.println("right");
+        state=movingForward;
         forward();
+        delay(500);
   }  
 
 
@@ -192,12 +183,12 @@ void loop()
             stop();
             delay(10);
             right();
-            delay(450);
+            delay(500);
             break;
           }
           laserDist0 = sensor0.readRangeContinuousMillimeters(); //reading the laser sensor while in the loop 
           slightRight();
-          delay(75);
+          delay(20);
           if(laserDist0 > temp) //once the laser reading is greater then the intial reading of getting close to the wall, exit do while loop
           {
             state=movingForward;
@@ -228,13 +219,26 @@ void loop()
           }
           laserDist1 = sensor1.readRangeContinuousMillimeters(); //reading the laser sensor while in the loop
           slightLeft();
-          delay(75);
+          delay(20);
           if(laserDist1 > temp) //once the laser reading is greater then the intial reading of getting close to the wall
           {
             state=movingForward;
           }
       }while(state == correctLeft);
       forward();
+  }
+
+  if(ultrasonicDist <75 && laserDist0 < 200 && laserDist1 <200){    //test function for when car is stuck at the end of a deadend hallway
+    stop();
+    delay(10);
+    backward();
+    delay(300);
+    stop();
+    right();
+    delay(1000);
+    stop();
+    forward();
+    state = movingForward;
   }
 
 
