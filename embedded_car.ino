@@ -45,8 +45,8 @@ int pinI4 = 13; //define I4 interface
 int speedpinB = 10; //enable motor B
 
 
-int motorSpeed = 200; //define the speed of motor
-int motorSpeed2=175; //the left motor is weake than the right, so this should be set to right motor
+int motorSpeed = 225; //define the speed of motor
+int motorSpeed2 = 215; //the left motor is weake than the right, so this should be set to right motor
 int turnSpeed = 150;
 int correctionSpeed = 150;
 
@@ -75,7 +75,6 @@ void setup()
   digitalWrite(enablePin1, LOW);
 
   // Sensor 0
-  Serial.println("Start Sensor 0");
   digitalWrite(enablePin0, HIGH);
   delay(50);
   sensor0.init();
@@ -91,7 +90,6 @@ void setup()
   delay(100);
   
   // Sensor1
-  Serial.println("Start Sensor 1");
   digitalWrite(enablePin1, HIGH);
   delay(50);
   sensor1.init();
@@ -116,8 +114,6 @@ void setup()
   pinMode(speedpinB, OUTPUT);
   
   //Initial direction
-  stop();
-  delay(10);
   forward();
 
 }
@@ -131,40 +127,38 @@ void loop()
   laserDist0 = sensor0.readRangeContinuousMillimeters();
   laserDist1 = sensor1.readRangeContinuousMillimeters();
 
-
-
-//making a left turn on a 90 degree turn with no opening
-//to the front and an opening to the left
-
-  if(laserDist0 >= 200) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
-  {
-        stop();
-        delay(30);
-        readUltrasonic(); //reading the ultrasonic while in the loop
-        left();
-        delay(550);
-        Serial.println("left");
-        state=movingForward;
-        forward();    
-        delay(500);  
-  }  
-
 //making a right turn on a 90 degree turn with no opening
 //to the front and an opening to the right
 
-  if(ultrasonicDist <= 150 && laserDist1 >= 200) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
+  if(laserDist1 >= 200) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
   {
         stop();
         delay(30);
         readUltrasonic();  //reading the ultrasonic while in the loop
         right();
-        delay(550);
-        Serial.println("right");
-        state=movingForward;
+        delay(450);
         forward();
-        delay(500);
+        delay(700);
   }  
 
+
+
+
+//making a left turn on a 90 degree turn with no opening
+//to the front and an opening to the left
+
+  if(laserDist0 >= 200 && state != turningRight) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
+  {
+        stop();
+        delay(40);
+        readUltrasonic(); //reading the ultrasonic while in the loop
+        left();
+        delay(550);
+
+        state=movingForward;
+        forward();    
+        delay(500);  
+  }  
 
 
 
@@ -249,26 +243,8 @@ void loop()
     state = movingForward;
   }
 
-
-  
-  //print state changes
-  if (state != lastState) {
-    Serial.print("State: ");
-    Serial.println(state);
-  }
-//  //track previous turn
-//  if (state == turningLeft || state == turningRight) {
-//    lastTurn = state;
-//  }
-  //track previous state
-  lastState = state;
   delay(300);
-  Serial.print("Ultrasonic Dist: ");
-  Serial.println(ultrasonicDist);
-  Serial.print("Laser Dist 0: "); 
-  Serial.println(laserDist0);
-  Serial.print("Laser Dist 1: ");
-  Serial.println(laserDist1); // it is dividing by two since sensor laser 1 is reading in data at double the values
+  state=movingForward;
 }//end loop
 
 void right()
@@ -289,7 +265,6 @@ void slightRight()
   digitalWrite(pinI3, LOW);
   digitalWrite(pinI2, HIGH); //turn DC Motor A move clockwise
   digitalWrite(pinI1, LOW);
-  Serial.println("correctingRight");
   state = correctRight;
 }
 void slightLeft()
@@ -300,7 +275,6 @@ void slightLeft()
   digitalWrite(pinI3, LOW);
   digitalWrite(pinI2, HIGH); //turn DC Motor A move clockwise
   digitalWrite(pinI1, LOW);
-  Serial.println("correctingleft");
   state = correctLeft;
 }
 void left()
@@ -321,8 +295,6 @@ void forward()
   digitalWrite(pinI3, LOW);
   digitalWrite(pinI2, HIGH); //turn DC Motor A move clockwise
   digitalWrite(pinI1, LOW);
-  Serial.println("forward");
-  state = movingForward;
 }
 void backward()
 {
