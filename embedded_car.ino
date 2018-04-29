@@ -46,6 +46,7 @@ int speedpinB = 10; //enable motor B
 
 
 int motorSpeed = 200; //define the speed of motor
+int motorSpeed2=175; //the left motor is weake than the right, so this should be set to right motor
 int turnSpeed = 150;
 int correctionSpeed = 150;
 
@@ -165,6 +166,9 @@ void loop()
   }  
 
 
+
+
+
 // correcting the car when getting close to the wall on the left
 // this only works if the course is 10 inches wide
 
@@ -199,7 +203,7 @@ void loop()
   
 // correcting the car when getting close to the wall on the right
 // this only works if the course is 10 inches wide
-  if(laserDist1 <= 80 && state == movingForward)
+  if(laserDist1 <= 130 && state == movingForward)
   {
       int temp = laserDist1;
       stop();
@@ -214,7 +218,7 @@ void loop()
             stop();
             delay(10);
             left();
-            delay(450);
+            delay(500);
             break;
           }
           laserDist1 = sensor1.readRangeContinuousMillimeters(); //reading the laser sensor while in the loop
@@ -228,7 +232,11 @@ void loop()
       forward();
   }
 
-  if(ultrasonicDist <75 && laserDist0 < 200 && laserDist1 <200){    //test function for when car is stuck at the end of a deadend hallway
+
+
+
+
+  if(ultrasonicDist <50 && laserDist0 < 220 && laserDist1 <220){    //test function for when car is stuck at the end of a deadend hallway
     stop();
     delay(10);
     backward();
@@ -308,7 +316,7 @@ void left()
 void forward()
 {
   analogWrite(speedpinA, motorSpeed); //input a simulation value to set the speed
-  analogWrite(speedpinB, motorSpeed);
+  analogWrite(speedpinB, motorSpeed2);
   digitalWrite(pinI4, HIGH); //turn DC Motor B move clockwise
   digitalWrite(pinI3, LOW);
   digitalWrite(pinI2, HIGH); //turn DC Motor A move clockwise
@@ -319,7 +327,7 @@ void forward()
 void backward()
 {
   analogWrite(speedpinA, motorSpeed); //input a simulation value to set the speed
-  analogWrite(speedpinB, motorSpeed);
+  analogWrite(speedpinB, motorSpeed2);
   digitalWrite(pinI4, LOW); //turn DC Motor B move counter clockwise
   digitalWrite(pinI3, HIGH);
   digitalWrite(pinI2, LOW); //turn DC Motor A move counter clockwise
