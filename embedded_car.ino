@@ -18,7 +18,6 @@ int enablePin1 = A1;
 //Used for the sensor
 long timer;                             //used to measure time between meausurements
 long duration;                          //used to measure the time between pulse an echo
-long sensorTimer = millis();
 int laserDist0;
 int laserDist1;
 int ultrasonicDist;
@@ -119,85 +118,69 @@ void setup()
   stop();
   delay(10);
   forward();
+
 }
 
 void loop()
 {
   //get ultrasonic reading
-  if(millis() - sensorTimer > 50){
-    readUltrasonic();
-    
-    //get laser readings 
-    laserDist0 = sensor0.readRangeContinuousMillimeters();
-    laserDist1 = sensor1.readRangeContinuousMillimeters();
-    sensorTimer = millis();
-   }
+  readUltrasonic();
+  
+  //get laser readings 
+  laserDist0 = sensor0.readRangeContinuousMillimeters();
+  laserDist1 = sensor1.readRangeContinuousMillimeters();
+
 
 
 //making a left turn on a 90 degree turn with no opening
 //to the front and an opening to the left
 
-  if(laserDist0 >= 250) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
+  if(laserDist0 >= 170) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
   {
-        // Give the car a little time past the turn so it doesn't turn too soon
-        delay(200);
+        stop();
         do{
-          stop();
-          if (millis() - sensorTimer > 50){
-            readUltrasonic(); //reading the ultrasonic while in the loop
-            sensorTimer=millis();
-          }
+          readUltrasonic(); //reading the ultrasonic while in the loop
           left();
-          delay(500);
+          delay(450);
           Serial.println("left");
-          if(ultrasonicDist >= 200) //once the ultrasonic is reading a long distance it will stop
+          if(ultrasonicDist >= 250) //once the ultrasonic is reading a long distance it will stop
           {
-            stop();
-            delay(10);
-            forward();
+            state=movingForward;
           }
         }
         while(state == turningLeft);
-        //forward(); 
-        delay(1000);     
+        forward();      
   }  
 
 //making a right turn on a 90 degree turn with no opening
 //to the front and an opening to the right
 
-  if(laserDist1 >= 250) //gonna have to measure the ultrasonic sensor so the turn will not hit the walls
+  if(ultrasonicDist <= 200 && laserDist1 >= 170) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
   {
-        // Give the car a little time past the turn so it doesn't turn too soon
-        delay(200);
+        stop();
+      
         do{
-          stop();
-          delay(10);
-          if (millis() - sensorTimer > 50){
-            readUltrasonic(); //reading the ultrasonic while in the loop
-            sensorTimer=millis();
-          }
+          readUltrasonic();  //reading the ultrasonic while in the loop
           right();
-          delay(500);
+          delay(450);
           Serial.println("right");
-          if(ultrasonicDist >= 200) //once the ultrasonic is reading a long distance it will stop
+          if(ultrasonicDist >= 250) //once the ultrasonic is reading a long distance it will stop
           {
-            stop();
-            delay(10);
-            forward();
+            state=movingForward;
           }
         }
         while(state == turningRight);
-        //forward();
-        delay(1000);
-  }   
+        forward();
+  }  
+
 
 // correcting the car when getting close to the wall on the left
 // this only works if the course is 10 inches wide
 
 //***** this is a work in progress since the correcting over adjusts the correction ****
-  if(laserDist0 <= 75 && state == movingForward)
+  if(laserDist0 <= 80 && state == movingForward)
   {
-      int temp = laserDist0;
+      int temp = laserDist0; //should be less than 100mm
       stop();
       long checkCorrectTimeLeft = millis();
       do{
@@ -209,25 +192,23 @@ void loop()
             stop();
             delay(10);
             right();
-            delay(200);
+            delay(450);
             break;
           }
           laserDist0 = sensor0.readRangeContinuousMillimeters(); //reading the laser sensor while in the loop 
           slightRight();
-          delay(100);
-          if(laserDist0 > temp) //once the laser reading is greater then the intial reading of getting close to the wall
+          delay(75);
+          if(laserDist0 > temp) //once the laser reading is greater then the intial reading of getting close to the wall, exit do while loop
           {
-            stop();
-            delay(10);
-            forward();
+            state=movingForward;
           }
       }while(state == correctRight);
-      //forward();
+      forward();
   }
   
 // correcting the car when getting close to the wall on the right
 // this only works if the course is 10 inches wide
-  if(laserDist1 <= 100 && state == movingForward)
+  if(laserDist1 <= 80 && state == movingForward)
   {
       int temp = laserDist1;
       stop();
@@ -242,19 +223,20 @@ void loop()
             stop();
             delay(10);
             left();
-            delay(200);
+            delay(450);
             break;
           }
           laserDist1 = sensor1.readRangeContinuousMillimeters(); //reading the laser sensor while in the loop
           slightLeft();
-          delay(100);
+          delay(75);
           if(laserDist1 > temp) //once the laser reading is greater then the intial reading of getting close to the wall
           {
-            forward();
+            state=movingForward;
           }
       }while(state == correctLeft);
-      //forward();
+      forward();
   }
+
 
   
   //print state changes
@@ -268,14 +250,14 @@ void loop()
 //  }
   //track previous state
   lastState = state;
-  delay(100);
+  delay(300);
   Serial.print("Ultrasonic Dist: ");
   Serial.println(ultrasonicDist);
   Serial.print("Laser Dist 0: "); 
   Serial.println(laserDist0);
   Serial.print("Laser Dist 1: ");
   Serial.println(laserDist1); // it is dividing by two since sensor laser 1 is reading in data at double the values
-}
+}//end loop
 
 void right()
 {
@@ -344,6 +326,8 @@ void stop()
 {
   digitalWrite(speedpinA, LOW); // disable the speed pin to stop the motor
   digitalWrite(speedpinB, LOW);
+  digitalWrite(pinI3, LOW);
+  digitalWrite(pinI1, LOW);
   state = stopped;
 }
 
