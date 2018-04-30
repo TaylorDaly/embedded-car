@@ -13,7 +13,7 @@
 /* GPIO stands for general purpose input/output pin */
 int enablePin0 = A0;
 int enablePin1 = A1;
-
+int touchSensor = 5;
 
 //Used for the sensor
 long timer;                             //used to measure time between meausurements
@@ -61,6 +61,8 @@ void setup()
   Serial.begin(9600); // Starts the serial communication
   Wire.begin();
 
+  pinMode(touchSensor, INPUT);
+  
   //Ultrasonic sensor
   pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
   pinMode(echoPin, INPUT); // Sets the echoPin as an Input
@@ -112,7 +114,11 @@ void setup()
   pinMode(pinI3, OUTPUT);
   pinMode(pinI4, OUTPUT);
   pinMode(speedpinB, OUTPUT);
-  
+
+
+  while(digitalRead(touchSensor)!=HIGH){
+    //wait for the touch sensor to turn the car on
+  }
   //Initial direction
   forward();
 
@@ -245,6 +251,7 @@ void loop()
 
   delay(300);
   state=movingForward;
+
 }//end loop
 
 void right()
