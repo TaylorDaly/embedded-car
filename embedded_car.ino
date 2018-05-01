@@ -47,7 +47,7 @@ int speedpinB = 10; //enable motor B
 
 int motorSpeed = 225; //define the speed of motor
 int motorSpeed2 = 215; //the left motor is weake than the right, so this should be set to right motor
-int turnSpeed = 150;
+int turnSpeed = 225;
 int correctionSpeed = 150;
 
 //State logic
@@ -121,6 +121,7 @@ void setup()
   }
   //Initial direction
   forward();
+  delay(1000);
 
 }
 
@@ -133,18 +134,19 @@ void loop()
   laserDist0 = sensor0.readRangeContinuousMillimeters();
   laserDist1 = sensor1.readRangeContinuousMillimeters();
 
+
 //making a right turn on a 90 degree turn with no opening
 //to the front and an opening to the right
 
   if(laserDist1 >= 200) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
   {
         stop();
-        delay(30);
+        delay(120);
         readUltrasonic();  //reading the ultrasonic while in the loop
         right();
-        delay(450);
+        delay(350);
         forward();
-        delay(700);
+        delay(500);
   }  
 
 
@@ -156,14 +158,14 @@ void loop()
   if(laserDist0 >= 200 && state != turningRight) //gonna have to measure the ultrasonic sensor so the turn will no hit the walls
   {
         stop();
-        delay(40);
+        delay(120);
         readUltrasonic(); //reading the ultrasonic while in the loop
         left();
-        delay(550);
+        delay(350);
 
         state=movingForward;
         forward();    
-        delay(500);  
+        delay(600);  
   }  
 
 
@@ -214,11 +216,11 @@ void loop()
             stop();
             delay(10);
             backward();
-            delay(500);
+            delay(200);
             stop();
             delay(10);
             left();
-            delay(500);
+            delay(200);
             break;
           }
           laserDist1 = sensor1.readRangeContinuousMillimeters(); //reading the laser sensor while in the loop
@@ -243,11 +245,23 @@ void loop()
     delay(300);
     stop();
     right();
-    delay(1000);
+    delay(500);
     stop();
     forward();
     state = movingForward;
   }
+//
+//  if(ultrasonicDist >3500){
+//    stop();
+//    delay(10);
+//    backward();
+//    delay(200);
+//    stop();
+//    right();
+//    delay(100);
+//    stop();
+//    forward();
+//  }
 
   delay(300);
   state=movingForward;
